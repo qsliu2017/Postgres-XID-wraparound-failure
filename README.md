@@ -26,6 +26,7 @@ Then `XMIN` field is unnecessary since any active transcation is in the future o
 So we can mark this row as *frozen* and reuse the XID. The process of freezing rows and reusing XID is called `VACUUM`.
 
 The word 'vacuum' is quite interesting. Consider XID counter is going through the XIDs space and leaving some used XIDs along the way, while a vacuum cleaner is following and cleaning the space.
+
 ![](vacuum.svg)
 
 With the baseline algorithm, XID counter returns to the beginning of XID space once the wrap-around occurs.
@@ -42,6 +43,7 @@ bool isVisible(unsigned int XID, unsigned int XMIN){
 We can think of XIDs space as a circle. Given a XID, there are XIDs in a half of the space greater than it.
 
 With this XID space, Postgres just need to promise that, whenever a transcation begins, the greater half of the space is vacuumed.
+
 ![](modulo-vacuum.svg)
 
 Consider if we do vacuum so aggressive that the XID space is always almost clean up, the XID counter will never be blocked!
