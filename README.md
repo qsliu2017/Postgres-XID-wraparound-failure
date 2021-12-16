@@ -1,24 +1,24 @@
 # Postgres-XID-wraparound-failure
 
-PostgresSQL database provides a non-block read/write model by multiversion concurrency control (MVCC).
-The MVCC can be simply described as "rows created *in the future* or deleted *in the past* are invisible to current transcation".
+PostgresSQL provides a concurrency read/write model, simply described as "rows created *in the future* or deleted *in the past* are invisible to current transcation".
+
 To determine whether a row is *in the future* or *in the past* of a trascation, Postgres assigns an incrementing 32-bits interger, **transcation ID** (XID), to each trancation.
 For instance, a row created by a transcation has a `XMIN` value equals to XID of the transcation, indicating this row is visible only to transcations in the future of `XMIN`.
 
-## Linear XID space
+## First look of wrap-around
 
-Given a transcation with `XID` and a row with `XMIN`, there is a basic algorithm to determine the visibility:
+Given a transcation with `XID` and a row with `XMIN`, let's say we use a simple algorithm to determine the visibility:
 ```C
 bool isVisible(unsigned int XID, unsigned int XMIN){
   return XID > XMIN;
 }
 ```
 
-An obvious problem is that the number of transcations might be beyond the scope of 32-bits interger.
+We construct a linear XID space. But an obvious problem is that the number of transcations might be beyond the scope of 32-bits interger.
 Once the XID increases up to the limit of 32-bits, it wraps around to zero. Then all the rows actually in the past appear to be in the future.
 This is so-called **wrap-around** failure.
 
-## Vacuum
+## Vacuum XIDs
 
 To avoid wrap-around failure, we can ***freeze*** the rows which are *old enough*.
 Let's say there is a row with `XMIN`, and all the transcations begin in the past are completed.
@@ -29,7 +29,7 @@ The word 'vacuum' is quite interesting. Consider XID counter is going through th
 
 ![](vacuum.svg)
 
-With the baseline algorithm, XID counter returns to the beginning of XID space once the wrap-around occurs.
+With the linear XID space, XID counter returns to the beginning of XID space once the wrap-around occurs.
 However it must be blocked until all XIDs are vacuumed. This could become a bottleneck of database.
 
 ## Modulo XID space
@@ -50,7 +50,7 @@ Consider if we do vacuum so aggressive that the XID space is always almost clean
 
 ## `auto_vacuum`
 
-Postgres provides an `auto_vacuum` deamon to do vacuum. By setting the parameters, database managers can control the behaviour of this deamon to satisfy the requirement of their specific domains. Here are two of the most useful parameters:
+Postgres provides an `auto_vacuum` deamon to do vacuum. By setting the parameters, database managers can control the behaviour of this deamon to satisfy the requirement of their specific domains. However inappropriate parameters might cause the loss of performance, even the database failure. Here are two of the most useful parameters:
 
 > `vacuum_freeze_min_age` controls how old an XID value has to be before rows bearing that XID will be frozen. Increasing this setting may avoid unnecessary work if the rows that would otherwise be frozen will soon be modified again, but decreasing this setting increases the number of transactions that can elapse before the table must be vacuumed again.
 
