@@ -40,9 +40,9 @@ bool isVisible(unsigned int XID, unsigned int XMIN){
 }
 ```
 
-We can think of XIDs space as a circle. Given a XID, there are XIDs in a half of the space greater than it.
+We can think of XIDs space as a circle. Given a XID, there are 2^31 XIDs (a half of the space) greater than it.
 
-With this XID space, Postgres just need to promise that, whenever a transcation begins, the greater half of the space is vacuumed.
+With modulo XID space, Postgres just need to promise that, whenever a transcation begins, the greater half of the space is vacuumed.
 
 ![](modulo-vacuum.svg)
 
@@ -50,5 +50,10 @@ Consider if we do vacuum so aggressive that the XID space is always almost clean
 
 ## `auto_vacuum`
 
-Postgres provides an `auto_vacuum` deamon to do vacuum. By setting the params of auto_vacuum, database managers can control the action depends on the specific domain.
-However unsuitable params might also cause ...
+Postgres provides an `auto_vacuum` deamon to do vacuum. By setting the parameters, database managers can control the behaviour of this deamon to satisfy the requirement of their specific domains. Here are two of the most useful parameters:
+
+> `vacuum_freeze_min_age` controls how old an XID value has to be before rows bearing that XID will be frozen. Increasing this setting may avoid unnecessary work if the rows that would otherwise be frozen will soon be modified again, but decreasing this setting increases the number of transactions that can elapse before the table must be vacuumed again.
+
+> `autovacuum_freeze_max_age` implies that if a table is not otherwise vacuumed, autovacuum will be invoked on it approximately once every `autovacuum_freeze_max_age` minus `vacuum_freeze_min_age` transactions.
+
+A principle is, the more frequently we schedule vacuum, the less effect (time and space) one vacuum takes. [Postgres document](https://www.postgresql.org/docs/current/routine-vacuuming.html#VACUUM-FOR-WRAPAROUND) provides a complete description of all the parameters.
