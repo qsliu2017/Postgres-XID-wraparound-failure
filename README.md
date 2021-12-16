@@ -18,14 +18,14 @@ We construct a linear XID space. But an obvious problem is that the number of tr
 Once the XID increases up to the limit of 32-bits, it wraps around to zero. Then all the rows actually in the past appear to be in the future.
 This is so-called **wrap-around** failure.
 
-## Vacuum XIDs
+## Vacuuming XIDs
 
-To avoid wrap-around failure, we can ***freeze*** the rows which are *old enough*.
+To avoid wrap-around failure, we can *freeze* the rows which are *old enough*.
 Let's say there is a row with `XMIN`, and all the transcations begin in the past are completed.
 Then `XMIN` field is unnecessary since any active transcation is in the future of it.
 So we can mark this row as *frozen* and reuse the XID. The process of freezing rows and reusing XID is called `VACUUM`.
 
-The word 'vacuum' is quite interesting. Consider XID counter is going through the XIDs space and leaving some used XIDs along the way, while a vacuum cleaner is following and cleaning the space.
+The word *vacuum* is quite interesting. Consider XID counter is going through the XIDs space and leaving some used XIDs along the way, while a vacuum cleaner is following and cleaning the space.
 
 ![](vacuum.svg)
 
