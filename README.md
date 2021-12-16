@@ -50,7 +50,7 @@ Consider if we do vacuum so aggressive that the XID space is always almost clean
 
 ## `auto_vacuum`
 
-Postgres provides an `auto_vacuum` deamon to do vacuum. By setting the parameters, database managers can control the behaviour of this deamon to satisfy the requirement of their specific domains. However inappropriate parameters might cause the loss of performance, even the database failure. Here are two of the most useful parameters:
+Postgres provides an `auto_vacuum` daemon to do vacuum. By setting the parameters, database managers can control the behaviour of this deamon to satisfy the requirement of their specific domains. However inappropriate parameters might cause the loss of performance, even the database failure. Here are two of the most useful parameters:
 
 > `vacuum_freeze_min_age` controls how old an XID value has to be before rows bearing that XID will be frozen. Increasing this setting may avoid unnecessary work if the rows that would otherwise be frozen will soon be modified again, but decreasing this setting increases the number of transactions that can elapse before the table must be vacuumed again.
 
